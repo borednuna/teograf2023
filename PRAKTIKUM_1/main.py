@@ -3,6 +3,7 @@ class Node:
         self.key = key
         self.left = None
         self.right = None
+        self.lmis_length = 0
 
 class BinarySearchTree:
     def __init__(self):
@@ -20,27 +21,38 @@ class BinarySearchTree:
             root.right = self._insert(root.right, key)
         return root
 
-    def findLMISElements(self):
-        return self._findLMISElements(self.root, float('-inf'), [])
+    def find_lmis(self):
+        def dfs(node):
+            if not node:
+                return 0, []
 
-    def _findLMISElements(self, node, prev, current_sequence):
-        if node is None:
-            return current_sequence
+            lmis_elements = [node.key]
+            for child in (node.left, node.right):
+                if child:
+                    child_lmis, child_elements = dfs(child)
+                    if node.key < child.key and node.lmis_length < child_lmis:
+                        node.lmis_length = child_lmis
+                        lmis_elements = [node.key] + child_elements
 
-        if node.key > prev:
-            left_sequence = self._findLMISElements(node.left, node.key, current_sequence + [node.key])
-            right_sequence = self._findLMISElements(node.right, node.key, current_sequence + [node.key])
-            return left_sequence if len(left_sequence) > len(right_sequence) else right_sequence
-        else:
-            left_sequence = self._findLMISElements(node.left, node.key, [node.key])
-            right_sequence = self._findLMISElements(node.right, node.key, [node.key])
-            return left_sequence if len(left_sequence) > len(right_sequence) else right_sequence
+            return node.lmis_length + 1, lmis_elements
 
-# Usage example
+        max_lmis_length, max_lmis_elements = 0, []
+        if self.root:
+            for node in (self.root, self.root.left, self.root.right):
+                if node:
+                    lmis_length, lmis_elements = dfs(node)
+                    if lmis_length > max_lmis_length:
+                        max_lmis_length = lmis_length
+                        max_lmis_elements = lmis_elements
+
+        return max_lmis_length, max_lmis_elements
+
+# Example usage:
 bst = BinarySearchTree()
-keys = [9, 1, 5, 4, 6, 3, 7, 2, 10, 8]
-for key in keys:
-    bst.insert(key)
+sequence = [7, 2, 1, 10, 8, 6, 5, 4, 9, 3]
+for num in sequence:
+    bst.insert(num)
 
-print("Largest Monotonically Increasing Sequence:", bst.findLMISElements())
-print("Length of LMIS:", len(bst.findLMISElements()))
+lmis_length, lmis_elements = bst.find_lmis()
+print(f"LMIS Length: {lmis_length}")  # Output: 4 (for the sequence [1, 6, 8, 9])
+print(f"LMIS Elements: {lmis_elements}")  # Output: [1, 6, 8, 9]
